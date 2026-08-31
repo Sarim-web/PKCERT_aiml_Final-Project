@@ -1,0 +1,125 @@
+# IT Incident Severity Classifier
+
+**PKCERT AI & Software Development Internship – Capstone Project**  
+**Author:** Sarim Ahmed  
+
+AI-powered triage tool for IT / SRE teams.  
+Paste an incident description and get a predicted severity (**Critical · High · Medium · Low**) with confidence.  
+Compare multiple incidents and get a recommended handling order.
+
+---
+
+## Features
+- Fine-tuned **DistilBERT** classifier (4 severity classes)
+- FastAPI inference service with input validation
+- Streamlit UI  
+  - Single prediction  
+  - Multi-incident comparison (2–10 items) with ranking
+- Fully free local stack (no paid APIs required for core inference)
+
+---
+
+## Project Structure
+
+```text
+PKCERT_internship_task29/
+├── app/
+│   ├── main.py              # FastAPI application
+│   ├── schemas.py           # Pydantic request/response models
+│   └── model_loader.py      # Model load + predict helpers
+├── frontend/
+│   └── streamlit_app.py     # Streamlit UI
+├── models/
+│   └── incident_severity_final/   # Saved DistilBERT checkpoint
+├── data/
+│   ├── raw/
+│   └── processed/
+├── notebook/
+│   └── PKCERT_internship_task29.ipynb
+├── requirements.txt
+└── README.md
+```
+
+## Setup
+
+### 1. Python Environment
+Use Python 3.11.
+```bash
+py -3.11 -m pip install -r requirements.txt
+```
+
+### 2. Start the API
+From the project root:
+```bash
+py -3.11 -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
+- **Health:** [http://127.0.0.1:8000/healthz](http://127.0.0.1:8000/healthz)
+- **Docs:** [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
+
+### 3. Start the UI
+In a second terminal:
+```bash
+py -3.11 -m streamlit run frontend/streamlit_app.py
+```
+Open the URL shown in the terminal (usually `http://localhost:8501`).
+
+## Example API Call
+
+```bash
+curl -X POST http://127.0.0.1:8000/api/v1/predict ^
+  -H "Content-Type: application/json" ^
+  -d "{\"text\": \"Production payments-api is completely down. All transactions failing.\"}"
+```
+
+**Example Response:**
+```json
+{
+  "severity": "Critical",
+  "confidence": 0.98,
+  "label_id": 0
+}
+```
+
+## Model & Data (Summary)
+
+- **Task:** 4-class text classification (Critical / High / Medium / Low)
+- **Model:** `distilbert-base-uncased` fine-tuned with Hugging Face Trainer
+- **Data:** Domain-realistic IT incident reports (balanced, 4,000 samples) built under explicit ITSM severity definitions after public ticket datasets proved unsuitable (template collapse / label noise)
+- **Test performance:** Accuracy 1.00 · Macro-F1 1.00 on the held-out synthetic test set. *(Note: Strong lexical severity cues are present; real-world generalisation would require anonymised historical tickets)*
+
+## Ranking Logic (Compare Tab)
+
+1. Higher severity wins (Critical > High > Medium > Low)
+2. If severity is equal, higher model confidence is preferred
+
+## Deployment Notes
+
+Core inference runs fully offline once the model is saved.
+Suggested free options:
+- Local demo (this README)
+- Streamlit Community Cloud for the UI (point `API_URL` to a free host, or embed a lightweight CPU model)
+- Docker (optional) for reproducible packaging of API + model
+
+*No paid Hugging Face Inference endpoints are required for the final system.*
+
+## Quick start for evaluators:
+
+## Plain terminal:
+
+1. `py -3.11 -m pip install -r requirements.txt`
+2. Terminal 1 → `py -3.11 -m uvicorn app.main:app --host 0.0.0.0 --port 8000`
+3. Terminal 2 → `py -3.11 -m streamlit run frontend/streamlit_app.py`
+4. Open the Streamlit URL shown in the terminal
+
+## Docker:
+
+Prerequisites: Docker Desktop installed and running.
+
+```bash
+docker build -t incident-severity .
+docker run -p 8000:8000 -p 8501:8501 incident-severity
+
+
+## Acknowledgements
+
+Built as the final capstone of the PKCERT AI & Software Development Internship, integrating skills from earlier tasks (Transformers, evaluation, FastAPI patterns, Streamlit UI).

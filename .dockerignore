@@ -1,0 +1,13 @@
+data/
+notebook/
+__pycache__/
+*.pyc
+.git/
+.venv/
+venv/
+*.csv
+*.ipynb
+*.md
+.env
+.DS_Store
+models/incident_severity_baseline/

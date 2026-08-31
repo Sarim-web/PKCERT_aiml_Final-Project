@@ -1,0 +1,27 @@
+services:
+  incident-classifier:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: pkcert-incident-classifier:latest
+    container_name: pkcert-task29
+    ports:
+      - "8000:8000"
+      - "8501:8501"
+    environment:
+      - PYTHONUNBUFFERED=1
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/healthz')"]
+      interval: 30s
+      timeout: 5s
+      start_period: 20s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 2g
+        reservations:
+          cpus: "0.5"
+          memory: 512m
+    restart: unless-stopped
